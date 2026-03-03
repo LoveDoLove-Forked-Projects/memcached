@@ -1605,13 +1605,15 @@ void process_command_ascii(conn *c, char *command, size_t cmdlen) {
 
         return;
     } else if (ret == PROCESS_REQUEST_CMD_NOT_FOUND) {
-        int len = 0;
-        const char *cm = mcmc_token_get(pr.request, &pr.tok, 0, &len);
-        for (int x = 0; text_cmd_entries[x].s; x++) {
-            const struct text_cmd_entry *e = &text_cmd_entries[x];
-            if (strncmp(e->s, cm, len) == 0) {
-                e->func(c, &pr);
-                return;
+        if (pr.tok.ntokens > 0) {
+            int len = 0;
+            const char *cm = mcmc_token_get(pr.request, &pr.tok, 0, &len);
+            for (int x = 0; text_cmd_entries[x].s; x++) {
+                const struct text_cmd_entry *e = &text_cmd_entries[x];
+                if (strncmp(e->s, cm, len) == 0) {
+                    e->func(c, &pr);
+                    return;
+                }
             }
         }
 
