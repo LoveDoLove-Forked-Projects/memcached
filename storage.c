@@ -942,6 +942,9 @@ static void storage_compact_readback(void *storage, logger *l,
     unsigned int skipped = 0;
     unsigned int rescue_cold = 0;
     unsigned int rescue_old = 0;
+    // Sleep this many times during the readback before becoming impatient.
+    // Each sleep is 1ms.
+    int max_waits = 5000;
 
     while (offset < read_size) {
         item *hdr_it = NULL;
@@ -987,18 +990,24 @@ static void storage_compact_readback(void *storage, logger *l,
 
             if (do_write) {
                 bool do_update = false;
-                int tries;
+                int tries = max_waits;
                 obj_io io;
                 io.len = ntotal;
                 io.mode = OBJ_IO_WRITE;
-                for (tries = 10; tries > 0; tries--) {
+                // Wait for a write buffer or page to become available.
+                if (tries < 10) {
+                    // Wait a minimum of 10ms
+                    tries = 10;
+                }
+                for (; tries > 0; tries--) {
                     if (extstore_write_request(storage, bucket, bucket, &io) == 0) {
                         memcpy(io.buf, it, io.len);
                         extstore_write(storage, &io);
                         do_update = true;
                         break;
                     } else {
-                        usleep(10000);
+                        max_waits--;
+                        usleep(1000);
                     }
                 }
 
