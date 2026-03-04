@@ -1619,7 +1619,7 @@ void process_command_ascii(conn *c, char *command, size_t cmdlen) {
             const char *cm = mcmc_token_get(pr.request, &pr.tok, 0, &len);
             for (int x = 0; text_cmd_entries[x].s; x++) {
                 const struct text_cmd_entry *e = &text_cmd_entries[x];
-                if (strncmp(e->s, cm, len) == 0) {
+                if (strlen(e->s) == len && strncmp(e->s, cm, len) == 0) {
                     e->func(c, &pr);
                     return;
                 }
